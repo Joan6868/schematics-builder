@@ -514,6 +514,7 @@ export const components = {
         apertureRadius: DEFAULT_APERTURE_RADIUS,
         coneAngle: DEFAULT_CONE_ANGLE,
         rayShape: 'collimated',
+        interactionType: 'reflect',
 
         draw: (ns) => {
             const g = document.createElementNS(ns, "g");
@@ -536,7 +537,17 @@ export const components = {
             lc.setAttribute("fill", "#145ec0");
             lc.setAttribute("fill-opacity", "0.5");
             g.appendChild(lc);
-
+            // Surface normal
+            const normal = document.createElementNS(ns, "line");
+            normal.setAttribute("x1", "-25");
+            normal.setAttribute("y1", "0");
+            normal.setAttribute("x2", "25");
+            normal.setAttribute("y2", "0");
+            normal.setAttribute("stroke", "#666");
+            normal.setAttribute("stroke-width", "1");
+            normal.setAttribute("stroke-dasharray", "4 3");
+            normal.setAttribute("pointer-events", "none");
+            g.appendChild(normal);
             return g;
         }
     },

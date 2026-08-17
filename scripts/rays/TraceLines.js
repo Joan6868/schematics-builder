@@ -92,54 +92,54 @@ export function drawTraceLines() {
         traceLine.setAttribute("stroke-dasharray", "5,5");
         traceLine.setAttribute("pointer-events", "none");
         traceLinesGroup.appendChild(traceLine);
-        // Preview the physically correct reflected direction for flat mirrors
-        if (component.type === 'mirror') {
+        // // Preview the physically correct reflected direction for flat mirrors
+        // if (component.type === 'mirror') {
 
-            // Incoming beam direction: parent -> mirror
-            const incomingDirection = normalizeVector({
-                x: childCenter.x - parentCenter.x,
-                y: childCenter.y - parentCenter.y
-            });
+        //     // Incoming beam direction: parent -> mirror
+        //     const incomingDirection = normalizeVector({
+        //         x: childCenter.x - parentCenter.x,
+        //         y: childCenter.y - parentCenter.y
+        //     });
 
-            // Mirror's local normal is given by forwardVector.
-            // Rotate it into world coordinates.
-            const normalWorld = normalizeVector(
-                rotateVector(component.forwardVector, component.rotation)
-            );
+        //     // Mirror's local normal is given by forwardVector.
+        //     // Rotate it into world coordinates.
+        //     const normalWorld = normalizeVector(
+        //         rotateVector(component.forwardVector, component.rotation)
+        //     );
 
-            // Apply law of reflection
-            const reflectedDirection = normalizeVector(
-                reflectVector(incomingDirection, normalWorld)
-            );
+        //     // Apply law of reflection
+        //     const reflectedDirection = normalizeVector(
+        //         reflectVector(incomingDirection, normalWorld)
+        //     );
 
-            // Length of preview line
-            const previewLength = 150;
+        //     // Length of preview line
+        //     const previewLength = 150;
 
-            const reflectedLine = document.createElementNS(
-                "http://www.w3.org/2000/svg",
-                "line"
-            );
+        //     const reflectedLine = document.createElementNS(
+        //         "http://www.w3.org/2000/svg",
+        //         "line"
+        //     );
 
-            reflectedLine.setAttribute("x1", childCenter.x);
-            reflectedLine.setAttribute("y1", childCenter.y);
+        //     reflectedLine.setAttribute("x1", childCenter.x);
+        //     reflectedLine.setAttribute("y1", childCenter.y);
 
-            reflectedLine.setAttribute(
-                "x2",
-                childCenter.x + reflectedDirection.x * previewLength
-            );
+        //     reflectedLine.setAttribute(
+        //         "x2",
+        //         childCenter.x + reflectedDirection.x * previewLength
+        //     );
 
-            reflectedLine.setAttribute(
-                "y2",
-                childCenter.y + reflectedDirection.y * previewLength
-            );
+        //     reflectedLine.setAttribute(
+        //         "y2",
+        //         childCenter.y + reflectedDirection.y * previewLength
+        //     );
 
-            reflectedLine.setAttribute("stroke", "#d14");
-            reflectedLine.setAttribute("stroke-width", "2");
-            reflectedLine.setAttribute("stroke-dasharray", "8,5");
-            reflectedLine.setAttribute("pointer-events", "none");
+        //     reflectedLine.setAttribute("stroke", "#d14");
+        //     reflectedLine.setAttribute("stroke-width", "2");
+        //     reflectedLine.setAttribute("stroke-dasharray", "8,5");
+        //     reflectedLine.setAttribute("pointer-events", "none");
 
-            traceLinesGroup.appendChild(reflectedLine);
-        }
+        //     traceLinesGroup.appendChild(reflectedLine);
+        // }
     });
 }
 

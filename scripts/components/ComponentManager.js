@@ -312,7 +312,7 @@ export class ComponentManager {
 
     if (
       this.physicsConstrained &&
-      component.type === 'mirror' &&
+      component.interactionType === 'reflect' &&
       component.parent !== null
     ) {
       this.syncPhysicsArrow(id);
@@ -334,7 +334,7 @@ export class ComponentManager {
 
   // Ordinary components:
   // rotate the spawn arrow together with the component.
-  if (component.type !== 'mirror' || component.parent === null) {
+  if (component.interactionType !== 'reflect' || component.parent === null) {
 
     const deltaRad = (angle - prevAngle) * Math.PI / 180;
     const cos = Math.cos(deltaRad);
@@ -354,7 +354,7 @@ export class ComponentManager {
   // outgoing direction comes from reflection physics instead.
   if (
     this.physicsConstrained &&
-    component.type === 'mirror' &&
+    component.interactionType === 'reflect' &&
     component.parent !== null
   ) {
     this.syncPhysicsArrow(id);
@@ -391,7 +391,7 @@ export class ComponentManager {
     // correct all mirror outgoing arrows.
     if (this.physicsConstrained) {
       this.components.forEach((component, id) => {
-        if (component.type === 'mirror' && component.parent !== null) {
+        if (component.interactionType === 'reflect' && component.parent !== null) {
           this.syncPhysicsArrow(id);
         }
       });
