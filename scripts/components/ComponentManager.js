@@ -223,6 +223,10 @@ export class ComponentManager {
 
     component.setPosition(x, y);
 
+    if (component.type === 'mirror' && component.parent !== null) {
+      this.syncPhysicsArrow(id);
+    }
+
     console.log(`Updated position of component [ID: ${id}] to (${x}, ${y})`);
 
     // // Auto-center the canvas to show all components
@@ -232,31 +236,47 @@ export class ComponentManager {
   }
 
   updateComponentRotation(id, angle) {
-    const component = this.components.get(id);
-    if (!component) return false;
+  const component = this.components.get(id);
+  if (!component) return false;
 
-    // Rotate arrowVector by the delta angle so the spawn arrow follows the component
-    const prevAngle = component.getRotation();
+  const prevAngle = component.getRotation();
+
+  // Ordinary components:
+  // rotate the spawn arrow together with the component.
+  if (component.type !== 'mirror' || component.parent === null) {
+
     const deltaRad = (angle - prevAngle) * Math.PI / 180;
     const cos = Math.cos(deltaRad);
     const sin = Math.sin(deltaRad);
+
     const av = component.getArrowVector();
+
     component.setArrowVector(
       av.x * cos - av.y * sin,
       av.x * sin + av.y * cos
     );
-
-    component.setRotation(angle);
-
-    // Keep nextPosition in sync so the next spawned component lands at the arrow tip
-    if (this.currentId === id) {
-      this.updateNextPositionFromComponent(id);
-    }
-
-    console.log(`Updated rotation of component [ID: ${id}] to ${angle} degrees`);
-
-    return true;
   }
+
+  component.setRotation(angle);
+
+  // Mirror:
+  // outgoing direction comes from reflection physics instead.
+  if (component.type === 'mirror' && component.parent !== null) {
+    this.syncPhysicsArrow(id);
+  }
+
+  // Keep nextPosition in sync so the next spawned component
+  // lands at the arrow tip.
+  if (this.currentId === id) {
+    this.updateNextPositionFromComponent(id);
+  }
+
+  console.log(
+    `Updated rotation of component [ID: ${id}] to ${angle} degrees`
+  );
+
+  return true;
+}
 
   updateComponentScale(id, scale) {
     const component = this.components.get(id);
@@ -269,14 +289,105 @@ export class ComponentManager {
     return true;
   }
 
+  getPhysicalOutgoingDirection(id) {
+    const component = this.components.get(id);
+
+    // For now, only flat mirrors have a physics-controlled output.
+    if (!component || component.type !== 'mirror' || component.parent === null) {
+      return null;
+    }
+
+    const parent = this.components.get(component.parent);
+    if (!parent) return null;
+
+    // Incoming direction: parent -> mirror
+    const parentCenter = parent.getApertureCenterWorld();
+    const mirrorCenter = component.getApertureCenterWorld();
+
+    let dx = mirrorCenter.x - parentCenter.x;
+    let dy = mirrorCenter.y - parentCenter.y;
+
+    const dLength = Math.hypot(dx, dy);
+    if (dLength === 0) return null;
+
+    dx /= dLength;
+    dy /= dLength;
+
+    // Mirror normal in world coordinates.
+    // forwardVector is the local mirror normal.
+    const angle = component.rotation * Math.PI / 180;
+    const cos = Math.cos(angle);
+    const sin = Math.sin(angle);
+
+    let nx =
+      component.forwardVector.x * cos -
+      component.forwardVector.y * sin;
+
+    let ny =
+      component.forwardVector.x * sin +
+      component.forwardVector.y * cos;
+
+    const nLength = Math.hypot(nx, ny);
+    if (nLength === 0) return null;
+
+    nx /= nLength;
+    ny /= nLength;
+
+    // Reflection law:
+    // d_out = d_in - 2 (d_in · n) n
+    const dot = dx * nx + dy * ny;
+
+    let rx = dx - 2 * dot * nx;
+    let ry = dy - 2 * dot * ny;
+
+    const rLength = Math.hypot(rx, ry);
+    if (rLength === 0) return null;
+
+    rx /= rLength;
+    ry /= rLength;
+
+    return { x: rx, y: ry };
+  }
+
+
+  syncPhysicsArrow(id) {
+    const component = this.components.get(id);
+    if (!component) return false;
+
+    const direction = this.getPhysicalOutgoingDirection(id);
+    if (!direction) return false;
+
+    // Keep whatever arrow length the user currently chose.
+    const currentArrow = component.getArrowVector();
+    const arrowLength = Math.hypot(
+      currentArrow.x,
+      currentArrow.y
+    );
+
+    if (arrowLength === 0) return false;
+
+    component.setArrowVector(
+      direction.x * arrowLength,
+      direction.y * arrowLength
+    );
+
+    return true;
+  }
+
   updateNextPositionFromComponent(id) {
     const component = this.components.get(id);
     if (!component) return false;
 
+    // If this is a physics-aware component such as a mirror,
+    // first force its arrow onto the physical outgoing direction.
+    this.syncPhysicsArrow(id);
+
     const endpoint = component.getArrowEndpoint();
     this.nextPosition = { x: endpoint.x, y: endpoint.y };
 
-    console.log(`Next position updated to arrow tip: (${endpoint.x}, ${endpoint.y})`);
+    console.log(
+      `Next position updated to arrow tip: (${endpoint.x}, ${endpoint.y})`
+    );
 
     return true;
   }
