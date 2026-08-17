@@ -272,6 +272,18 @@ export const components = {
             backsurface.setAttribute("stroke-width", "2.5");
             g.appendChild(backsurface);
 
+            // Surface normal
+            const normal = document.createElementNS(ns, "line");
+            normal.setAttribute("x1", "-28");
+            normal.setAttribute("y1", "0");
+            normal.setAttribute("x2", "22");
+            normal.setAttribute("y2", "0");
+            normal.setAttribute("stroke", "#666");
+            normal.setAttribute("stroke-width", "1");
+            normal.setAttribute("stroke-dasharray", "4 3");
+            normal.setAttribute("pointer-events", "none");
+            g.appendChild(normal);
+
             return g;
         }
     },
