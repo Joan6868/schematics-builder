@@ -107,24 +107,81 @@ function setupArrowDragging(handle, line, componentId, centerX, centerY) {
     pt.y = e.clientY;
     const svgPt = pt.matrixTransform(svg.getScreenCTM().inverse());
 
-    // Snap to grid
-    const snapSize = ARROW_TIP_SNAP_SIZE;
-    const snappedX = Math.round(svgPt.x / snapSize) * snapSize;
-    const snappedY = Math.round(svgPt.y / snapSize) * snapSize;
-
-    // Update line endpoint
-    line.setAttribute('x2', snappedX);
-    line.setAttribute('y2', snappedY);
-
-    // Update handle position
-    handle.setAttribute('cx', snappedX);
-    handle.setAttribute('cy', snappedY);
-
-    // Update component's arrow vector (relative to optical center in world space)
     const component = componentManager.getComponent(componentId);
+
     if (component) {
       const oc = component.getCenterPointWorld();
-      component.setArrowVector(snappedX - oc.x, snappedY - oc.y);
+
+      let targetX;
+      let targetY;
+
+      // Ask ComponentManager whether this component has
+      // a physics-controlled outgoing direction.
+      const physicalDirection =
+        componentManager.getPhysicalOutgoingDirection(componentId);
+
+      if (physicalDirection) {
+        // -----------------------------------------
+        // PHYSICS-CONSTRAINED COMPONENT
+        // Currently this means: flat mirror
+        // -----------------------------------------
+
+        // Mouse position relative to component centre
+        const mouseDx = svgPt.x - oc.x;
+        const mouseDy = svgPt.y - oc.y;
+
+        // Project the mouse onto the physically valid outgoing ray.
+        //
+        // Since physicalDirection is a unit vector:
+        //
+        // length = mouseVector · physicalDirection
+        //
+        let length =
+          mouseDx * physicalDirection.x +
+          mouseDy * physicalDirection.y;
+
+        // Snap the DISTANCE along the ray instead of snapping x/y.
+        const snapSize = ARROW_TIP_SNAP_SIZE;
+
+        length =
+          Math.round(length / snapSize) * snapSize;
+
+        // Do not allow the arrow to flip behind the mirror.
+        length = Math.max(snapSize, length);
+
+        targetX =
+          oc.x + physicalDirection.x * length;
+
+        targetY =
+          oc.y + physicalDirection.y * length;
+
+      } else {
+        // -----------------------------------------
+        // NORMAL COMPONENT
+        // Preserve the original free-drag behaviour
+        // -----------------------------------------
+
+        const snapSize = ARROW_TIP_SNAP_SIZE;
+
+        targetX =
+          Math.round(svgPt.x / snapSize) * snapSize;
+
+        targetY =
+          Math.round(svgPt.y / snapSize) * snapSize;
+      }
+
+      // Update visible arrow
+      line.setAttribute('x2', targetX);
+      line.setAttribute('y2', targetY);
+
+      handle.setAttribute('cx', targetX);
+      handle.setAttribute('cy', targetY);
+
+      // Store arrow vector relative to optical centre
+      component.setArrowVector(
+        targetX - oc.x,
+        targetY - oc.y
+      );
     }
 
     e.preventDefault();
