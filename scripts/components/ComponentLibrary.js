@@ -250,6 +250,7 @@ export const components = {
         apertureRadius: DEFAULT_APERTURE_RADIUS,
         coneAngle: DEFAULT_CONE_ANGLE,
         rayShape: 'collimated',
+        interactionType: 'reflect',
 
         draw: (ns) => {
             const g = document.createElementNS(ns, "g");
@@ -379,6 +380,7 @@ export const components = {
         apertureRadius: DEFAULT_APERTURE_RADIUS,
         coneAngle: DEFAULT_CONE_ANGLE,
         rayShape: 'collimated',
+        interactionType: 'terminate',
 
         draw: (ns) => {
             const g = document.createElementNS(ns, "g");

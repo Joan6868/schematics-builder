@@ -405,73 +405,123 @@ export class ComponentManager {
   }
 
   getPhysicalOutgoingDirection(id) {
+    // Free-layout mode: no physics constraint.
     if (!this.physicsConstrained) {
       return null;
     }
 
     const component = this.components.get(id);
+    if (!component) {
+      return null;
+    }
 
-    // For now, only flat mirrors have a physics-controlled output.
-    if (
-      !this.physicsConstrained ||
-      component.type !== 'mirror' ||
-      component.parent === null
-    ) {
+    // A component with no parent has no defined incoming beam.
+    if (component.parent === null) {
       return null;
     }
 
     const parent = this.components.get(component.parent);
-    if (!parent) return null;
+    if (!parent) {
+      return null;
+    }
 
-    // Incoming direction: parent -> mirror
+    // Incoming direction: parent -> current component
     const parentCenter = parent.getApertureCenterWorld();
-    const mirrorCenter = component.getApertureCenterWorld();
+    const componentCenter = component.getApertureCenterWorld();
 
-    let dx = mirrorCenter.x - parentCenter.x;
-    let dy = mirrorCenter.y - parentCenter.y;
+    let dx = componentCenter.x - parentCenter.x;
+    let dy = componentCenter.y - parentCenter.y;
 
     const dLength = Math.hypot(dx, dy);
-    if (dLength === 0) return null;
+    if (dLength === 0) {
+      return null;
+    }
 
     dx /= dLength;
     dy /= dLength;
 
-    // Mirror normal in world coordinates.
-    // forwardVector is the local mirror normal.
-    const angle = component.rotation * Math.PI / 180;
-    const cos = Math.cos(angle);
-    const sin = Math.sin(angle);
+    // -----------------------------------------
+    // TERMINATING COMPONENT
+    // Detector / camera: beam stops here.
+    // -----------------------------------------
+    if (component.interactionType === 'terminate') {
+      return null;
+    }
 
-    let nx =
-      component.forwardVector.x * cos -
-      component.forwardVector.y * sin;
+    // -----------------------------------------
+    // TRANSMITTING COMPONENT
+    // Lens, iris, polarizer, SLM, etc.
+    //
+    // For schematic geometry, the central ray
+    // continues in the same direction.
+    // -----------------------------------------
+    if (component.interactionType === 'transmit') {
+      return {
+        x: dx,
+        y: dy
+      };
+    }
 
-    let ny =
-      component.forwardVector.x * sin +
-      component.forwardVector.y * cos;
+    // -----------------------------------------
+    // REFLECTING COMPONENT
+    // Mirror
+    // -----------------------------------------
+    if (component.interactionType === 'reflect') {
 
-    const nLength = Math.hypot(nx, ny);
-    if (nLength === 0) return null;
+      // Mirror normal in world coordinates.
+      // forwardVector is its local normal.
+      const angle =
+        component.rotation * Math.PI / 180;
 
-    nx /= nLength;
-    ny /= nLength;
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
 
-    // Reflection law:
-    // d_out = d_in - 2 (d_in · n) n
-    const dot = dx * nx + dy * ny;
+      let nx =
+        component.forwardVector.x * cos -
+        component.forwardVector.y * sin;
 
-    let rx = dx - 2 * dot * nx;
-    let ry = dy - 2 * dot * ny;
+      let ny =
+        component.forwardVector.x * sin +
+        component.forwardVector.y * cos;
 
-    const rLength = Math.hypot(rx, ry);
-    if (rLength === 0) return null;
+      const nLength = Math.hypot(nx, ny);
+      if (nLength === 0) {
+        return null;
+      }
 
-    rx /= rLength;
-    ry /= rLength;
+      nx /= nLength;
+      ny /= nLength;
 
-    return { x: rx, y: ry };
+      // Reflection law:
+      // d_out = d_in - 2(d_in · n)n
+      const dot =
+        dx * nx +
+        dy * ny;
+
+      let rx =
+        dx - 2 * dot * nx;
+
+      let ry =
+        dy - 2 * dot * ny;
+
+      const rLength = Math.hypot(rx, ry);
+      if (rLength === 0) {
+        return null;
+      }
+
+      rx /= rLength;
+      ry /= rLength;
+
+      return {
+        x: rx,
+        y: ry
+      };
+    }
+
+    // Unknown interaction type:
+    // don't impose a physics constraint.
+    return null;
   }
-
 
   syncPhysicsArrow(id) {
     const component = this.components.get(id);

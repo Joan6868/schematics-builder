@@ -39,7 +39,8 @@ export class Component {
         apertureRadius: definition.apertureRadius,
         coneAngle: definition.coneAngle,
         rayShape: definition.rayShape,
-        drawFunction: definition.draw
+        drawFunction: definition.draw,
+        interactionType: definition.interactionType || 'transmit',
       };
       
       this._initializeFromConfig(config);
@@ -68,6 +69,7 @@ export class Component {
     this.apertureRadius = config.apertureRadius ?? 15;
     this.coneAngle = config.coneAngle ?? 0;
     this.rayShape = config.rayShape || 'collimated';
+    this.interactionType = config.interactionType || 'transmit';
     this.rayPolygonColor = config.rayPolygonColor || DEFAULT_SOLID_RAY_COLOR;
     this.rayPolygonOpacity = config.rayPolygonOpacity ?? DEFAULT_RAY_POLYGON_OPACITY;
     this.rayColorInheritFromParent = config.rayColorInheritFromParent ?? true;
