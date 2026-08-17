@@ -484,13 +484,28 @@ export function setupComponentDragging() {
       if (initialState) {
         const newX = initialState.x + deltaX;
         const newY = initialState.y + deltaY;
-        const snappedX = Math.round(newX / DRAGGING_SNAP_INCREMENT) * DRAGGING_SNAP_INCREMENT;
-        const snappedY = Math.round(newY / DRAGGING_SNAP_INCREMENT) * DRAGGING_SNAP_INCREMENT;
+
+        const snappedX =
+          Math.round(newX / DRAGGING_SNAP_INCREMENT) *
+          DRAGGING_SNAP_INCREMENT;
+
+        const snappedY =
+          Math.round(newY / DRAGGING_SNAP_INCREMENT) *
+          DRAGGING_SNAP_INCREMENT;
+
+        // Ask ComponentManager whether this position
+        // needs to obey an optical-path constraint.
+        const constrainedPosition =
+          componentManager.getConstrainedChildPosition(
+            draggedId,
+            snappedX,
+            snappedY
+          );
 
         componentManager.updateComponentPosition(
           draggedId,
-          snappedX,
-          snappedY
+          constrainedPosition.x,
+          constrainedPosition.y
         );
 
         if (componentManager.selectedIds.size === 1 && componentManager.selectedIds.has(draggedId)) {

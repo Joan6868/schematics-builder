@@ -22,6 +22,7 @@ export class ComponentManager {
     this.selectedIds = new Set();
     this.nextPosition = { x: 0, y: 0 };
     this.ignoreNextCanvasClick = false;
+    this.physicsConstrained = true;
   }
 
   addComponent(type, position = null) {
@@ -217,13 +218,103 @@ export class ComponentManager {
     return this.components.get(id);
   }
 
+  getConstrainedChildPosition(id, requestedX, requestedY) {
+    const component = this.components.get(id);
+
+    // Free-layout mode or no parent:
+    // allow arbitrary positioning.
+    if (
+      !this.physicsConstrained ||
+      !component ||
+      component.parent === null
+    ) {
+      return {
+        x: requestedX,
+        y: requestedY
+      };
+    }
+
+    const parent = this.components.get(component.parent);
+
+    if (!parent) {
+      return {
+        x: requestedX,
+        y: requestedY
+      };
+    }
+
+    // Currently only mirrors produce a physics-controlled
+    // outgoing direction.
+    const direction =
+      this.getPhysicalOutgoingDirection(component.parent);
+
+    if (!direction) {
+      return {
+        x: requestedX,
+        y: requestedY
+      };
+    }
+
+    // Outgoing ray starts at parent's aperture centre.
+    const origin = parent.getApertureCenterWorld();
+
+    /*
+    * The component position is not necessarily exactly the
+    * same as its aperture centre, so preserve that offset.
+    */
+    const currentPosition = component.getPosition();
+    const currentAperture = component.getApertureCenterWorld();
+
+    const apertureOffsetX =
+      currentAperture.x - currentPosition.x;
+
+    const apertureOffsetY =
+      currentAperture.y - currentPosition.y;
+
+    // Where the aperture centre WOULD be for the requested
+    // component position.
+    const requestedApertureX =
+      requestedX + apertureOffsetX;
+
+    const requestedApertureY =
+      requestedY + apertureOffsetY;
+
+    // Vector from parent to requested aperture centre.
+    const dx = requestedApertureX - origin.x;
+    const dy = requestedApertureY - origin.y;
+
+    // Projection onto physically allowed ray.
+    let distance =
+      dx * direction.x +
+      dy * direction.y;
+
+    // Don't allow child to cross behind its parent.
+    distance = Math.max(0, distance);
+
+    const constrainedApertureX =
+      origin.x + direction.x * distance;
+
+    const constrainedApertureY =
+      origin.y + direction.y * distance;
+
+    // Convert aperture-centre position back to component position.
+    return {
+      x: constrainedApertureX - apertureOffsetX,
+      y: constrainedApertureY - apertureOffsetY
+    };
+  }
+
   updateComponentPosition(id, x, y) {
     const component = this.components.get(id);
     if (!component) return false;
 
     component.setPosition(x, y);
 
-    if (component.type === 'mirror' && component.parent !== null) {
+    if (
+      this.physicsConstrained &&
+      component.type === 'mirror' &&
+      component.parent !== null
+    ) {
       this.syncPhysicsArrow(id);
     }
 
@@ -261,7 +352,11 @@ export class ComponentManager {
 
   // Mirror:
   // outgoing direction comes from reflection physics instead.
-  if (component.type === 'mirror' && component.parent !== null) {
+  if (
+    this.physicsConstrained &&
+    component.type === 'mirror' &&
+    component.parent !== null
+  ) {
     this.syncPhysicsArrow(id);
   }
 
@@ -289,11 +384,39 @@ export class ComponentManager {
     return true;
   }
 
+  setPhysicsConstrained(enabled) {
+    this.physicsConstrained = Boolean(enabled);
+
+    // When physics is turned back on, immediately
+    // correct all mirror outgoing arrows.
+    if (this.physicsConstrained) {
+      this.components.forEach((component, id) => {
+        if (component.type === 'mirror' && component.parent !== null) {
+          this.syncPhysicsArrow(id);
+        }
+      });
+
+      if (this.currentId !== null) {
+        this.updateNextPositionFromComponent(this.currentId);
+      }
+    }
+
+    return this.physicsConstrained;
+  }
+
   getPhysicalOutgoingDirection(id) {
+    if (!this.physicsConstrained) {
+      return null;
+    }
+
     const component = this.components.get(id);
 
     // For now, only flat mirrors have a physics-controlled output.
-    if (!component || component.type !== 'mirror' || component.parent === null) {
+    if (
+      !this.physicsConstrained ||
+      component.type !== 'mirror' ||
+      component.parent === null
+    ) {
       return null;
     }
 

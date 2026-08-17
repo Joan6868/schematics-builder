@@ -7,6 +7,7 @@ import { openSaveCompositeDialog } from './components/SaveCompositeDialog.js';
 import { componentManager } from './components/index.js';
 import { initDebugLayer } from './utils/DebugLayer.js';
 import { setupRayMenu } from './rays/RayMenu.js';
+import { updateRays } from './rays/DrawRays.js';
 import './components/CompositeLibrary.js';
 
 export function initializeApp() {
@@ -31,6 +32,27 @@ export function initializeApp() {
   updateToolbarButtons();
   initDebugLayer();
   setupRayMenu();              // Initialize ray panel (Phase 3)
+
+  // Physics / free-layout toggle
+  const physicsToggleBtn =
+    document.getElementById('physics-toggle-btn');
+
+  if (physicsToggleBtn) {
+    physicsToggleBtn.addEventListener('click', () => {
+
+      const enabled =
+        componentManager.setPhysicsConstrained(
+          !componentManager.physicsConstrained
+        );
+
+      physicsToggleBtn.textContent =
+        enabled
+          ? 'Physics: On'
+          : 'Physics: Off';
+
+      updateRays();
+    });
+  }
 
   // Wire Save as Composite button
   document.getElementById('save-as-composite-btn')?.addEventListener('click', () => {
