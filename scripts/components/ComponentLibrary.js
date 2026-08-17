@@ -235,6 +235,88 @@ export const components = {
         }
     },
 
+    // ── Apertures ─────────────────────────────────────────────────────────────
+
+    iris: {
+        category: 'Apertures',
+        label: 'Iris',
+        isComposite: false,
+        isBuiltIn: true,
+
+        interactionType: 'transmit',
+
+        apertureMode: 'limit',
+        clearApertureRadius: 8,
+        apertureRadius: 8,
+
+        localBounds: {
+            minX: -8,
+            maxX: 8,
+            minY: -30,
+            maxY: 30
+        },
+
+        centerPoint: { x: 0, y: 0 },
+        apertureCenter: { x: 0, y: 0 },
+
+        forwardVector: { x: 1, y: 0 },
+        upVector: { x: 0, y: -1 },
+
+        // Fixed clear radius for now.
+        // We can make this user-adjustable later.
+        apertureRadius: 8,
+
+        coneAngle: DEFAULT_CONE_ANGLE,
+        rayShape: 'collimated',
+
+        draw: (ns) => {
+            const g = document.createElementNS(ns, 'g');
+
+            // Upper iris blade
+            const upperBlade = document.createElementNS(ns, 'path');
+            upperBlade.setAttribute(
+                'd',
+                'M -8 -30 L 8 -30 L 3 -8 L -3 -8 Z'
+            );
+            upperBlade.setAttribute('fill', '#555');
+            upperBlade.setAttribute('stroke', 'black');
+            upperBlade.setAttribute('stroke-width', '1.5');
+            g.appendChild(upperBlade);
+
+            // Lower iris blade
+            const lowerBlade = document.createElementNS(ns, 'path');
+            lowerBlade.setAttribute(
+                'd',
+                'M -3 8 L 3 8 L 8 30 L -8 30 Z'
+            );
+            lowerBlade.setAttribute('fill', '#555');
+            lowerBlade.setAttribute('stroke', 'black');
+            lowerBlade.setAttribute('stroke-width', '1.5');
+            g.appendChild(lowerBlade);
+
+            // Small vertical frame
+            const frameTop = document.createElementNS(ns, 'line');
+            frameTop.setAttribute('x1', '0');
+            frameTop.setAttribute('y1', '-30');
+            frameTop.setAttribute('x2', '0');
+            frameTop.setAttribute('y2', '-8');
+            frameTop.setAttribute('stroke', 'black');
+            frameTop.setAttribute('stroke-width', '2');
+            g.appendChild(frameTop);
+
+            const frameBottom = document.createElementNS(ns, 'line');
+            frameBottom.setAttribute('x1', '0');
+            frameBottom.setAttribute('y1', '8');
+            frameBottom.setAttribute('x2', '0');
+            frameBottom.setAttribute('y2', '30');
+            frameBottom.setAttribute('stroke', 'black');
+            frameBottom.setAttribute('stroke-width', '2');
+            g.appendChild(frameBottom);
+
+            return g;
+        }
+    },
+
     // ── Mirrors ───────────────────────────────────────────────────────────────
 
     mirror: {

@@ -86,12 +86,39 @@ function scaleApertureToParent(child, parent) {
 
     if (childProj === 0) return false;
 
-    const ratio     = parentProj / childProj;
-    const newRadius = child.apertureRadius * ratio;
+    const ratio = parentProj / childProj;
 
-    if (newRadius <= 0 || newRadius > 200 || !isFinite(newRadius)) return false;
+    let newRadius =
+        child.apertureRadius * ratio;
+
+    // Components such as an iris impose a maximum
+    // physical clear-aperture radius.
+    //
+    // If the incoming beam is wider than the iris,
+    // clip it.
+    //
+    // If the incoming beam is already narrower,
+    // leave it narrow.
+    if (
+        child.apertureMode === 'limit' &&
+        Number.isFinite(child.clearApertureRadius)
+    ) {
+        newRadius = Math.min(
+            newRadius,
+            child.clearApertureRadius
+        );
+    }
+
+    if (
+        newRadius <= 0 ||
+        newRadius > 200 ||
+        !isFinite(newRadius)
+    ) {
+        return false;
+    }
 
     child.setApertureRadius(newRadius);
+
     return true;
 }
 

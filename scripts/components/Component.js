@@ -41,6 +41,9 @@ export class Component {
         rayShape: definition.rayShape,
         drawFunction: definition.draw,
         interactionType: definition.interactionType || 'transmit',
+        apertureMode: definition.apertureMode || 'auto',
+        clearApertureRadius:
+          definition.clearApertureRadius ?? definition.apertureRadius,
       };
       
       this._initializeFromConfig(config);
@@ -67,6 +70,8 @@ export class Component {
     this.apertureCenter = config.apertureCenter || { x: 0, y: 0 };
     this.upVector = config.upVector || { x: 0, y: -1 };
     this.apertureRadius = config.apertureRadius ?? 15;
+    this.apertureMode = config.apertureMode || 'auto';
+    this.clearApertureRadius = config.clearApertureRadius ?? this.apertureRadius;
     this.coneAngle = config.coneAngle ?? 0;
     this.rayShape = config.rayShape || 'collimated';
     this.interactionType = config.interactionType || 'transmit';
